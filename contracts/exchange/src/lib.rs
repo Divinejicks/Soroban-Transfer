@@ -32,7 +32,7 @@ impl ExchangeContract {
         receive_token: Address,
         amount: i128,
     ) {
-        sender.require_auth_for_args((send_token.clone(), receive_token.clone(), amount).into_val(&env));
+        sender.require_auth_for_args((send_token.clone(), amount).into_val(&env));
         // receiver.require_auth_for_args((send_token.clone(), receive_token.clone(), amount).into_val(&env));
 
         let token_send = token::Client::new(&env, &send_token);
@@ -43,14 +43,14 @@ impl ExchangeContract {
             panic!("Not enough balance to send");
         }
 
+        // Transfer the send_token from sender to contract
+        token_send.transfer(&sender, &env.current_contract_address(), &amount);
+
         // Check contract balance of the receive_token
         let receive_balance = token_receive.balance(&env.current_contract_address());
         if receive_balance < amount {
             panic!("Contract doesn't have enough tokens to send")
         }
-
-        // Transfer the send_token from sender to contract
-        token_send.transfer(&sender, &env.current_contract_address(), &amount);
 
         // Transfer the receive_token from contract to receiver
         token_receive.transfer(&env.current_contract_address(), &receiver, &amount);
